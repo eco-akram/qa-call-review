@@ -56,6 +56,22 @@ The decision buttons, warnings and highlights meet WCAG AA contrast in light and
 
 - `data/candidate-calls.json`: the 20 synthetic calls supplied with the brief (see `data/candidate-readme.md`).
 - `data/mock-calls.json`: 5 extra fictional calls (`CALL-021` to `CALL-025`) for trying the import button. Two contain deliberate errors the checker should flag: a wrong date in `CALL-022` and a wrong amount in `CALL-023`.
+- `data/mock-calls-2.json`: 10 more fictional calls (`CALL-026` to `CALL-035`) covering the less common call types in the summary rules. Four summaries contain deliberate errors:
+
+  | Call | Scenario | Summary | Flagged by the app? |
+  |---|---|---|---|
+  | `CALL-026` | Wrong number | Accurate | – |
+  | `CALL-027` | Voicemail, no message left | Accurate | – |
+  | `CALL-028` | Internal agent consultation | Accurate | – |
+  | `CALL-029` | Incomplete call (one line) | Accurate | – |
+  | `CALL-030` | I&E refused, risk of further action warning | **Wrong time:** "after 5 pm", transcript says "after four" (T19) | Yes |
+  | `CALL-031` | Third party without Authority to Act | **Wrong claims:** says Authority to Act was verified and arrears were discussed; the agent refused to discuss the account (T03, T05) | **No:** non-numeric errors are not detected |
+  | `CALL-032` | Card payment declined, then promise to pay | Accurate | – |
+  | `CALL-033` | New Direct Debit, with an ASR hallucination block (T08) to ignore | Accurate | – |
+  | `CALL-034` | Redundancy, consent, 30-day hold | **Wrong referral:** "National Debtline", transcript says Citizens Advice (T11) | Yes, as a name not in the transcript |
+  | `CALL-035` | Debt management company with a letter of authority | **Wrong date:** "1 January", transcript says "the first of December" (T08) | Yes |
+
+  `CALL-031` deliberately shows the checker's limit: a reviewer has to catch it by reading.
 
 ## Importing calls
 

@@ -263,6 +263,8 @@ export function matchSentence(
     const isName =
       i > 0 &&
       /^[A-Z]/.test(word) &&
+      // All-caps abbreviations (DPA, I&E) are domain terms, not names.
+      !/^[A-Z&]{2,6}$/.test(word) &&
       !/[;:]$/.test(before) &&
       !CALENDAR.has(word.toLowerCase())
     if (!isName) continue

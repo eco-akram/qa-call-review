@@ -188,9 +188,14 @@ const MONTH_RE = MONTHS.join("|")
 const WEEKDAY_RE = WEEKDAYS.join("|")
 const ORD = "(?:st|nd|rd|th)"
 
-// Ordinals that are not dates: "the first line", "the second job".
-const NOT_DATE_AFTER =
-  "line|time|times|pay|payment|payments|payslip|one|ones|thing|job|instalment|wage|wages|call|week|month|year|step|letter|card|account|bit|half|place"
+// "the Nth" is only a date when followed by punctuation, the end of the text,
+// or a connecting word ("the fourth of December", "the eighth falls on",
+// "from the twenty-fifth to"). Followed by a noun it is an ordinal: "the first
+// line", "the second agent", "the first collection". Derived from the words
+// that follow day ordinals across the sample data.
+const DATE_FOLLOWERS =
+  "of|to|is|isn't|was|after|before|at|by|through|with|this|that|once|now|instead|falls|fell|would|will|works|suits|and|or|then|so|if|when|as|for|give|please"
+const DAY_ORDINAL_END = `(?=\\s*(?:[.,;:!?)]|$)|'s\\b|\\s+(?:${DATE_FOLLOWERS})\\b)`
 
 const MONTH_LABEL = (m: number) => MONTHS[m][0].toUpperCase() + MONTHS[m].slice(1)
 
@@ -268,7 +273,7 @@ export function extractFacts(src: string, ctx: DateCtx, turnId?: string): Fact[]
     const day = +m[1]
     return day >= 1 && day <= 31 ? dateFact(resolveDay(day, ctx), b) : null
   })
-  scan(new RegExp(`\\bthe\\s+(\\d{1,2})${ORD}\\b(?!\\s+(?:${NOT_DATE_AFTER})\\b)(?!-)`, "gi"), (m, b) => {
+  scan(new RegExp(`\\bthe\\s+(\\d{1,2})${ORD}\\b(?!-)${DAY_ORDINAL_END}`, "gi"), (m, b) => {
     const day = +m[1]
     return day >= 1 && day <= 31 ? dateFact(resolveDay(day, ctx), b) : null
   })
