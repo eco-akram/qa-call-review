@@ -1,4 +1,4 @@
-import rawCalls from "@/data/candidate-calls.json"
+// Client-safe call types and helpers. Data access lives in lib/data.ts.
 
 export type Call = {
   id: string
@@ -13,14 +13,6 @@ export type Turn = {
   time: string
   speaker: string
   text: string
-}
-
-export const calls: Call[] = [...(rawCalls as Call[])].sort((a, b) =>
-  a.id.localeCompare(b.id)
-)
-
-export function getCall(id: string | undefined): Call | undefined {
-  return calls.find((c) => c.id === id)
 }
 
 const TURN_RE = /^(T\d+)\s+\[(\d{1,2}:\d{2})\]\s+([^:]+):\s*(.*)$/

@@ -1,8 +1,7 @@
 import { CallSidebar } from "@/components/call-sidebar"
-import { ReviewPanel } from "@/components/review-panel"
-import { TranscriptPanel } from "@/components/transcript-panel"
-import { calls, getCall, parseTranscript } from "@/lib/calls"
-import { readReviews } from "@/lib/reviews"
+import { CallWorkspace } from "@/components/call-workspace"
+import { analyseCall } from "@/lib/analysis"
+import { latestReviews, listCalls } from "@/lib/data"
 
 export default async function Page({
   searchParams,
@@ -11,16 +10,46 @@ export default async function Page({
 }) {
   const { call: callParam } = await searchParams
   const requestedId = Array.isArray(callParam) ? callParam[0] : callParam
-  const reviews = await readReviews()
+  const [calls, reviews] = await Promise.all([listCalls(), latestReviews()])
+
+  if (calls.length === 0) {
+    return (
+      <div className="flex h-svh items-center justify-center p-6">
+        <div className="max-w-md space-y-2 text-sm">
+          <h1 className="text-base font-semibold">No calls in the database</h1>
+          <p className="text-muted-foreground">
+            Load the calls into Neon by running{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+              npm run db:setup
+            </code>{" "}
+            with <code className="font-mono text-xs">DATABASE_URL</code> set.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // Default to the first unreviewed call, falling back to the first call.
   const call =
-    getCall(requestedId) ?? calls.find((c) => !reviews[c.id]) ?? calls[0]
+    calls.find((c) => c.id === requestedId) ??
+    calls.find((c) => !reviews[c.id]) ??
+    calls[0]
   const existing = reviews[call.id]
+  const issueCounts = Object.fromEntries(
+    calls.map((c) => {
+      const a = analyseCall(c)
+      return [c.id, a.conflictCount + a.unsupportedCount]
+    })
+  )
 
   return (
     <div className="flex h-svh overflow-hidden">
-      <CallSidebar calls={calls} reviews={reviews} activeId={call.id} />
+      <CallSidebar
+        calls={calls}
+        reviews={reviews}
+        issueCounts={issueCounts}
+        activeId={call.id}
+      />
 
       <main className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-baseline gap-3 border-b px-5 py-3">
@@ -30,15 +59,7 @@ export default async function Page({
           </span>
         </header>
 
-        <div className="grid min-h-0 flex-1 grid-cols-2">
-          <TranscriptPanel turns={parseTranscript(call.transcript)} />
-          <ReviewPanel
-            key={`${call.id}:${existing?.reviewedAt ?? ""}`}
-            callId={call.id}
-            summary={call.summary}
-            existing={existing}
-          />
-        </div>
+        <CallWorkspace key={call.id} call={call} existing={existing} />
       </main>
     </div>
   )

@@ -8,10 +8,13 @@ import { cn } from "@/lib/utils"
 export function CallSidebar({
   calls,
   reviews,
+  issueCounts,
   activeId,
 }: {
   calls: Call[]
   reviews: ReviewMap
+  /** Automatically flagged summary facts per call. */
+  issueCounts: Record<string, number>
   activeId: string
 }) {
   const reviewed = calls.filter((c) => reviews[c.id]).length
@@ -51,7 +54,17 @@ export function CallSidebar({
                       {call.call_date} · {call.estimated_duration}
                     </span>
                   </span>
-                  <StatusBadge decision={reviews[call.id]?.decision} />
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    {issueCounts[call.id] > 0 && (
+                      <span
+                        title={`${issueCounts[call.id]} flagged fact${issueCounts[call.id] === 1 ? "" : "s"} in summary`}
+                        className="inline-flex size-5 items-center justify-center rounded-full bg-red-500/15 text-[11px] font-semibold text-red-700 dark:text-red-400"
+                      >
+                        {issueCounts[call.id]}
+                      </span>
+                    )}
+                    <StatusBadge decision={reviews[call.id]?.decision} />
+                  </span>
                 </Link>
               </li>
             )

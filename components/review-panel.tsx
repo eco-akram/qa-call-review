@@ -42,12 +42,13 @@ const OPTIONS: {
 
 export function ReviewPanel({
   callId,
-  summary,
   existing,
+  children,
 }: {
   callId: string
-  summary: string
   existing: Review | undefined
+  /** The summary content shown above the decision form. */
+  children: React.ReactNode
 }) {
   const [decision, setDecision] = useState<Decision | null>(
     existing?.decision ?? null
@@ -80,9 +81,7 @@ export function ReviewPanel({
         <StatusBadge decision={existing?.decision} />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{summary}</p>
-      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3">{children}</div>
 
       <form action={formAction} className="space-y-3 border-t bg-muted/30 p-4">
         <input type="hidden" name="callId" value={callId} />

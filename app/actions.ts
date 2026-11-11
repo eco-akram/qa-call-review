@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 
-import { getCall } from "@/lib/calls"
+import { addReview, callExists } from "@/lib/data"
 import { DECISIONS, REASON_MAX, type Decision } from "@/lib/review-types"
-import { writeReview } from "@/lib/reviews"
 
 export type SaveReviewState = { ok: boolean; error?: string; savedAt?: string }
 
@@ -16,7 +15,6 @@ export async function saveReview(
   const decision = String(formData.get("decision") ?? "") as Decision
   const reason = String(formData.get("reason") ?? "").trim()
 
-  if (!getCall(callId)) return { ok: false, error: "Unknown call." }
   if (!DECISIONS.includes(decision))
     return { ok: false, error: "Choose Approve, Reject or Needs edit." }
   if (decision !== "approve" && !reason)
@@ -24,8 +22,13 @@ export async function saveReview(
   if (reason.length > REASON_MAX)
     return { ok: false, error: `Keep the reason under ${REASON_MAX} characters.` }
 
-  const reviewedAt = new Date().toISOString()
-  await writeReview({ callId, decision, reason, reviewedAt })
-  revalidatePath("/")
-  return { ok: true, savedAt: reviewedAt }
+  try {
+    if (!(await callExists(callId))) return { ok: false, error: "Unknown call." }
+    const saved = await addReview({ callId, decision, reason })
+    revalidatePath("/")
+    return { ok: true, savedAt: saved.reviewedAt }
+  } catch (err) {
+    console.error("saveReview failed", err)
+    return { ok: false, error: "Could not save the review. Please try again." }
+  }
 }
