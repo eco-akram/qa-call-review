@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { ImportCalls } from "@/components/import-calls"
 import { StatusBadge } from "@/components/status-badge"
 import type { Call } from "@/lib/calls"
 import type { ReviewMap } from "@/lib/review-types"
@@ -32,6 +33,7 @@ export function CallSidebar({
             style={{ width: `${(reviewed / calls.length) * 100}%` }}
           />
         </div>
+        <ImportCalls />
       </div>
       <nav className="flex-1 overflow-y-auto p-2" aria-label="Calls">
         <ul className="flex flex-col gap-0.5">

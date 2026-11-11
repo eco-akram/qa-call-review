@@ -168,7 +168,7 @@ export function SummarySentences({
           const isSelected = selected === i
           const hasConflict = s.issues.some((x) => x.kind === "conflict")
           return (
-            <li key={i}>
+            <li key={i} data-sentence={i}>
               <button
                 type="button"
                 aria-pressed={isSelected}

@@ -15,7 +15,16 @@ A reviewer tool for checking AI-written collections-call summaries against their
 
 3. `npm run dev` and open http://localhost:3000.
 
-To load another batch of calls (same JSON shape: `id`, `call_date`, `estimated_duration`, `transcript`, `summary`):
+## Importing calls
+
+Use **Import calls** in the sidebar to upload a JSON file in the same format as `data/candidate-calls.json` (an array of `id`, `call_date`, `estimated_duration`, `transcript`, `summary`).
+
+- Calls whose `id` already exists are **skipped and left unchanged**; the result lists them.
+- If an `id` appears twice in the file, the first copy is used.
+- If any record is invalid (missing field, impossible date, not JSON), nothing is imported and the problems are listed.
+- Files up to 3.5 MB / 2,000 calls.
+
+From the command line, `db:setup` can also load a file. Unlike the button, it **updates** existing calls whose content differs:
 
 ```bash
 npm run db:setup -- path/to/more-calls.json
@@ -29,4 +38,5 @@ npm run db:setup -- path/to/more-calls.json
 ## Data model
 
 - `calls`: one row per call.
+- **Delete call** (top right of a call) permanently removes the call and all of its reviews, after a confirmation dialog.
 - `reviews`: one row per decision (`approve`, `reject`, `needs_edit`) with a reason of up to 280 characters. Updating a review adds a row, so the history is kept; the app shows the latest decision per call.

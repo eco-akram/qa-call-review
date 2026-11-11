@@ -7,6 +7,7 @@ import { SummarySentences } from "@/components/summary-sentences"
 import { TranscriptPanel, type TurnFlag } from "@/components/transcript-panel"
 import type { Call } from "@/lib/calls"
 import { analyseCall } from "@/lib/analysis"
+import { factTypeLabel } from "@/lib/facts"
 import type { Review } from "@/lib/review-types"
 
 function scrollToTurn(turnId: string) {
@@ -67,6 +68,32 @@ export function CallWorkspace({
     scrollToTurn(turnId)
   }, [])
 
+  // Short descriptions of flagged facts, for the "Approve anyway?" guard.
+  const flaggedIssues = useMemo(
+    () =>
+      analysis.sentences.flatMap((s, i) =>
+        s.issues.map((issue) =>
+          issue.kind === "conflict"
+            ? `S${i + 1}: possible wrong ${factTypeLabel(issue.fact.type)} “${issue.fact.quote}”`
+            : `S${i + 1}: ${factTypeLabel(issue.fact.type)} “${issue.fact.quote}” not in transcript`
+        )
+      ),
+    [analysis]
+  )
+
+  /** Selects the first flagged sentence and scrolls to its evidence. */
+  const showFirstIssue = useCallback(() => {
+    const i = analysis.sentences.findIndex((s) => s.issues.length > 0)
+    if (i === -1) return
+    setSelected(i)
+    const s = analysis.sentences[i]
+    const turnId = s.issues[0].candidates[0]?.turnId ?? s.matches[0]?.turnId
+    if (turnId) scrollToTurn(turnId)
+    document
+      .querySelector(`[data-sentence="${i}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [analysis])
+
   return (
     <div className="grid min-h-0 flex-1 grid-cols-2">
       <TranscriptPanel
@@ -78,6 +105,8 @@ export function CallWorkspace({
         key={`${call.id}:${existing?.reviewedAt ?? ""}`}
         callId={call.id}
         existing={existing}
+        flaggedIssues={flaggedIssues}
+        onShowIssues={showFirstIssue}
       >
         <SummarySentences
           analysis={analysis}

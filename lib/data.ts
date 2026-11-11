@@ -15,6 +15,47 @@ export async function listCalls(): Promise<Call[]> {
   return rows as Call[]
 }
 
+/**
+ * Inserts calls whose id is not already stored. Existing calls are left
+ * untouched (ON CONFLICT DO NOTHING). Returns the ids that were added.
+ */
+export async function insertNewCalls(calls: Call[]): Promise<string[]> {
+  if (calls.length === 0) return []
+  const sql = db()
+  const results = await sql.transaction(
+    calls.map(
+      (c) => sql`
+        INSERT INTO calls (id, call_date, estimated_duration, transcript, summary)
+        VALUES (${c.id}, ${c.call_date}, ${c.estimated_duration}, ${c.transcript}, ${c.summary})
+        ON CONFLICT (id) DO NOTHING
+        RETURNING id
+      `
+    )
+  )
+  return results.flat().map((r) => r.id as string)
+}
+
+/** Number of review decisions (full history) recorded for a call. */
+export async function countReviews(callId: string): Promise<number> {
+  const [row] = await db()`SELECT count(*)::int AS n FROM reviews WHERE call_id = ${callId}`
+  return row.n as number
+}
+
+/**
+ * Deletes a call. Its reviews are removed with it (ON DELETE CASCADE).
+ * Returns null if the call did not exist.
+ */
+export async function deleteCall(
+  id: string
+): Promise<{ reviewsDeleted: number } | null> {
+  const [row] = await db()`
+    WITH r AS (SELECT count(*)::int AS n FROM reviews WHERE call_id = ${id}),
+         d AS (DELETE FROM calls WHERE id = ${id} RETURNING id)
+    SELECT (SELECT count(*) FROM d)::int AS deleted, (SELECT n FROM r) AS reviews
+  `
+  return row.deleted ? { reviewsDeleted: row.reviews as number } : null
+}
+
 export async function callExists(id: string): Promise<boolean> {
   const rows = await db()`SELECT 1 FROM calls WHERE id = ${id}`
   return rows.length > 0
